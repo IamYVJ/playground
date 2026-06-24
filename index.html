@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YVJ's Playground — small web apps & games by Yashvardhan Jain</title>
+  <meta name="description" content="A collection of small web apps and games built and hosted on GitHub Pages by Yashvardhan Jain." />
+  <meta name="author" content="Yashvardhan Jain" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#6366F1" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="YVJ's Playground" />
+  <meta property="og:description" content="Small web apps and games I build and host on GitHub Pages." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://iamyvj.github.io/playground/" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Apply the saved/system theme before first paint to avoid a flash. -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('yvj-theme');
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = stored || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) { /* default light theme already set on <html> */ }
+    })();
+  </script>
+
+  <style>
+    :root {
+      --bg: #FAFAFB;
+      --bg-hero: radial-gradient(1200px 480px at 78% -10%, rgba(99, 102, 241, 0.10), transparent 60%),
+                 radial-gradient(900px 420px at 8% -20%, rgba(219, 39, 119, 0.06), transparent 55%);
+      --surface: #FFFFFF;
+      --surface-2: #F4F4F6;
+      --text: #18181B;
+      --text-muted: #6B7280;
+      --text-faint: #9CA3AF;
+      --border: #E9E9EE;
+      --border-strong: #DDDDE3;
+      --shadow-sm: 0 1px 2px rgba(17, 17, 26, 0.04), 0 1px 3px rgba(17, 17, 26, 0.05);
+      --shadow-md: 0 6px 18px rgba(17, 17, 26, 0.06), 0 2px 6px rgba(17, 17, 26, 0.05);
+      --shadow-lg: 0 18px 40px rgba(17, 17, 26, 0.10), 0 6px 14px rgba(17, 17, 26, 0.06);
+
+      --accent: #6366F1;
+      --accent-hover: #4F46E5;
+      --accent-soft: rgba(99, 102, 241, 0.10);
+      --accent-ring: rgba(99, 102, 241, 0.40);
+      --on-accent: #FFFFFF;
+
+      --accent-games: #DB2777;
+      --accent-games-hover: #BE185D;
+      --accent-games-soft: rgba(219, 39, 119, 0.10);
+
+      --tag-bg: #F1F1F5;
+      --tag-text: #52525B;
+
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --radius-pill: 999px;
+
+      --maxw: 1120px;
+      --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0E0E12;
+      --bg-hero: radial-gradient(1200px 480px at 78% -10%, rgba(129, 140, 248, 0.14), transparent 60%),
+                 radial-gradient(900px 420px at 8% -20%, rgba(244, 114, 182, 0.08), transparent 55%);
+      --surface: #17171C;
+      --surface-2: #1F1F26;
+      --text: #F4F4F5;
+      --text-muted: #A1A1AA;
+      --text-faint: #71717A;
+      --border: #27272E;
+      --border-strong: #34343C;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
+      --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+      --shadow-lg: 0 20px 46px rgba(0, 0, 0, 0.55);
+
+      --accent: #818CF8;
+      --accent-hover: #A5B4FC;
+      --accent-soft: rgba(129, 140, 248, 0.14);
+      --accent-ring: rgba(129, 140, 248, 0.50);
+      --on-accent: #0E0E12;
+
+      --accent-games: #F472B6;
+      --accent-games-hover: #F9A8D4;
+      --accent-games-soft: rgba(244, 114, 182, 0.14);
+
+      --tag-bg: #25252C;
+      --tag-text: #C4C4CC;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-weight: 400;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+    }
+
+    a { color: inherit; }
+
+    .wrap {
+      width: 100%;
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ---------- Skip link ---------- */
+    .skip-link {
+      position: absolute;
+      left: 12px;
+      top: -48px;
+      z-index: 100;
+      background: var(--accent);
+      color: var(--on-accent);
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      text-decoration: none;
+      transition: top 0.2s var(--ease);
+    }
+    .skip-link:focus { top: 12px; }
+
+    /* ---------- Header / Hero ---------- */
+    header.hero {
+      background: var(--bg-hero);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 0;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .brand .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      color: var(--on-accent);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-games));
+      box-shadow: var(--shadow-sm);
+      flex: 0 0 auto;
+    }
+    .brand .brand-name {
+      font-weight: 600;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .topbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ghost-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 9px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      transition: border-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+    .ghost-link:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .ghost-link svg { width: 17px; height: 17px; }
+
+    .theme-toggle {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+      transition: border-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+    .theme-toggle:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .theme-toggle svg { width: 19px; height: 19px; }
+    .theme-toggle .icon-moon { display: none; }
+    .theme-toggle .icon-sun { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+
+    .hero-body {
+      padding: 40px 0 52px;
+      max-width: 720px;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      margin-bottom: 18px;
+    }
+    .hero-eyebrow .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent);
+    }
+    h1.hero-title {
+      margin: 0 0 16px;
+      font-size: clamp(2.2rem, 5.4vw, 3.5rem);
+      line-height: 1.04;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      font-weight: 600;
+    }
+    h1.hero-title .accent {
+      background: linear-gradient(120deg, var(--accent), var(--accent-games));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    p.hero-sub {
+      margin: 0;
+      font-size: clamp(1.02rem, 2.2vw, 1.18rem);
+      color: var(--text-muted);
+      max-width: 56ch;
+    }
+
+    /* ---------- Controls (search + tags) ---------- */
+    .controls {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: saturate(150%) blur(10px);
+      -webkit-backdrop-filter: saturate(150%) blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+    }
+    .controls-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .search-box {
+      position: relative;
+      flex: 1 1 300px;
+      min-width: 0;
+    }
+    .search-box svg.search-icon {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      width: 18px; height: 18px;
+      color: var(--text-faint);
+      pointer-events: none;
+    }
+    #search {
+      width: 100%;
+      font: inherit;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      padding: 11px 42px 11px 42px;
+      transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+    #search::placeholder { color: var(--text-faint); }
+    #search:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-ring);
+    }
+    .search-clear {
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      width: 28px; height: 28px;
+      border: none;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      place-items: center;
+      padding: 0;
+    }
+    .search-clear svg { width: 14px; height: 14px; }
+    .search-clear:hover { color: var(--text); }
+    .search-box.has-value .search-clear { display: grid; }
+
+    .result-count {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tag-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .tag-filter-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-faint);
+      margin-right: 2px;
+    }
+    .chip {
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--tag-text);
+      background: var(--tag-bg);
+      border: 1px solid transparent;
+      border-radius: var(--radius-pill);
+      padding: 6px 13px;
+      cursor: pointer;
+      transition: background-color 0.18s var(--ease), color 0.18s var(--ease), border-color 0.18s var(--ease), transform 0.18s var(--ease);
+    }
+    .chip:hover { transform: translateY(-1px); border-color: var(--border-strong); }
+    .chip[aria-pressed="true"] {
+      background: var(--accent);
+      color: var(--on-accent);
+      border-color: var(--accent);
+    }
+    .chip.chip-reset {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px dashed var(--border-strong);
+    }
+    .chip.chip-reset:hover { color: var(--text); border-style: solid; }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    /* ---------- Sections ---------- */
+    main { padding: 8px 0 24px; }
+
+    .section { padding: 38px 0 8px; scroll-margin-top: 120px; }
+    .section--games { --accent: var(--accent-games); --accent-hover: var(--accent-games-hover); --accent-soft: var(--accent-games-soft); }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.32rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-head h2::before {
+      content: "";
+      width: 10px; height: 10px;
+      border-radius: 3px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+    .section-head .count {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-faint);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    /* ---------- Card ---------- */
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s var(--ease);
+    }
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, var(--accent), transparent 45%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.22s var(--ease);
+      pointer-events: none;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: transparent;
+    }
+    .card:hover::after { opacity: 1; }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .card h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.005em;
+    }
+    .status-badge {
+      flex: 0 0 auto;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 9px;
+      border-radius: var(--radius-pill);
+      color: var(--on-accent);
+      background: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+    .status-badge.status-new { background: #16A34A; color: #fff; }
+    .status-badge.status-wip { background: #D97706; color: #fff; }
+    .status-badge.status-beta { background: var(--accent); color: var(--on-accent); }
+
+    .card p.desc {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      flex: 1 1 auto;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .card-tags .tag {
+      font-size: 0.74rem;
+      font-weight: 500;
+      color: var(--tag-text);
+      background: var(--tag-bg);
+      padding: 3px 9px;
+      border-radius: var(--radius-pill);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .btn {
+      flex: 1 1 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 9px 12px;
+      border-radius: var(--radius-md);
+      transition: transform 0.18s var(--ease), background-color 0.18s var(--ease), border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
+      white-space: nowrap;
+    }
+    .btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
+    .btn-live {
+      background: var(--accent);
+      color: var(--on-accent);
+      border: 1px solid var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-live:hover { background: var(--accent-hover); border-color: var(--accent-hover); transform: translateY(-1px); }
+    .btn-code {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+    .btn-code:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+
+    /* ---------- Empty state ---------- */
+    .empty-state {
+      display: none;
+      text-align: center;
+      padding: 64px 16px;
+      color: var(--text-muted);
+    }
+    .empty-state.show { display: block; }
+    .empty-state .big { font-size: 1.15rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+
+    /* ---------- Footer ---------- */
+    footer {
+      border-top: 1px solid var(--border);
+      margin-top: 48px;
+      padding: 32px 0 44px;
+    }
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .footer-inner a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+    }
+    .footer-inner a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .footer-links { display: inline-flex; gap: 18px; align-items: center; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 560px) {
+      .wrap { padding: 0 18px; }
+      .grid { grid-template-columns: 1fr; }
+      .brand .brand-name { font-size: 0.95rem; }
+      .ghost-link .label { display: none; }
+      .ghost-link { padding: 9px 11px; }
+      .hero-body { padding: 28px 0 36px; }
+      .search-row { flex-direction: column; align-items: stretch; }
+      .result-count { align-self: flex-end; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="hero">
+    <div class="wrap">
+      <div class="topbar">
+        <a class="brand" href="https://iamyvj.github.io/playground/" aria-label="YVJ's Playground — home">
+          <span class="logo" aria-hidden="true">YVJ</span>
+          <span class="brand-name">YVJ's&nbsp;Playground</span>
+        </a>
+        <div class="topbar-actions">
+          <a class="ghost-link" href="https://github.com/IamYVJ" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+            <span class="label">GitHub</span>
+          </a>
+          <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle theme">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-body">
+        <span class="hero-eyebrow"><span class="dot" aria-hidden="true"></span> Yashvardhan Jain</span>
+        <h1 class="hero-title">YVJ's <span class="accent">Playground</span></h1>
+        <p class="hero-sub">Small web apps and games I build and host on GitHub Pages. Everything here is free, static, and open source — poke around.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="controls" role="search">
+    <div class="wrap controls-inner">
+      <div class="search-row">
+        <div class="search-box" id="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+          <input type="search" id="search" placeholder="Search projects by name, description or tag…" aria-label="Search projects" autocomplete="off" />
+          <button class="search-clear" id="search-clear" type="button" aria-label="Clear search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+        <span class="result-count" id="result-count" aria-live="polite"></span>
+      </div>
+      <div class="tag-filter" id="tag-filter" role="group" aria-label="Filter projects by tag">
+        <span class="tag-filter-label">Tags</span>
+        <!-- tag chips injected here -->
+      </div>
+    </div>
+  </div>
+
+  <main id="main" class="wrap">
+    <section class="section section--tools" id="tools" aria-labelledby="tools-heading">
+      <div class="section-head">
+        <h2 id="tools-heading">Tools</h2>
+        <span class="count" id="tools-count"></span>
+      </div>
+      <div class="grid" id="tools-grid"></div>
+    </section>
+
+    <section class="section section--games" id="games" aria-labelledby="games-heading">
+      <div class="section-head">
+        <h2 id="games-heading">Games</h2>
+        <span class="count" id="games-count"></span>
+      </div>
+      <div class="grid" id="games-grid"></div>
+    </section>
+
+    <div class="empty-state" id="empty-state" aria-live="polite">
+      <div class="big">No projects match your filters</div>
+      <div>Try a different search term or clear the active tags.</div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Built &amp; maintained by Yashvardhan Jain.</span>
+      <span class="footer-links">
+        <a href="https://github.com/IamYVJ" target="_blank" rel="noopener noreferrer">GitHub&nbsp;@IamYVJ</a>
+        <a href="https://iamyvj.github.io/playground/">iamyvj.github.io/playground</a>
+      </span>
+    </div>
+  </footer>
+
+  <script>
+    /* =========================================================
+       Project data — add a new project by appending one entry.
+       Both links are derived from `repo`:
+         Code → https://github.com/IamYVJ/{repo}
+         Live → https://iamyvj.github.io/{repo}/
+       The {repo} segment is case-sensitive in both URLs.
+       Optional `status` renders a badge: "New" | "WIP" | "Beta".
+       ========================================================= */
+    const PROJECTS = {
+      tools: [
+        { name: 'World Time',         repo: 'worldtime',         description: 'Easy world time navigator.',                    tags: ['HTML', 'time-zones'] },
+        { name: 'Data Transformer',   repo: 'data-transformer',  description: 'Transform and reshape data between formats.',   tags: ['JS', 'data'] },
+        { name: 'JSON Explorer',      repo: 'json-explorer',     description: 'Explore and navigate JSON as a tree.',          tags: ['JS', 'data', 'dev-tool'] },
+        { name: 'Sankey Studio',      repo: 'sankeystudio',      description: 'Sankey chart maker.',                           tags: ['JS', 'dataviz'] },
+        { name: 'SecureKit',          repo: 'SecureKit',         description: 'Secure PDF toolkit.',                           tags: ['JS', 'PDF', 'privacy'] },
+        { name: 'Password Generator', repo: 'password-generator',description: 'Generate secure passwords.',                    tags: ['CSS', 'security'] },
+        { name: 'Smart Code',         repo: 'smart-code',        description: 'Generate QR codes & barcodes.',                 tags: ['JS', 'QR', 'barcode'] },
+        { name: 'FixtureForge',       repo: 'FixtureForge',      description: 'Sports fixture generator.',                     tags: ['HTML', 'sports'] },
+        { name: 'PickleLog',          repo: 'picklelog',         description: 'Pickleball scoring.',                           tags: ['JS', 'sports'] }
+      ],
+      games: [
+        { name: 'Local Codenames',     repo: 'localcodenames',    description: 'Codenames on your local network.',             tags: ['JS', 'multiplayer', 'local-network'] },
+        { name: 'Local Fish Bowl',     repo: 'localfishbowl',     description: 'Fish Bowl party game.',                         tags: ['JS', 'multiplayer', 'local-network'] },
+        { name: 'Local Avalon',        repo: 'localavalon',       description: 'Locally hosted Avalon.',                        tags: ['JS', 'multiplayer', 'local-network'] },
+        { name: 'Local Mafia',         repo: 'localmafia',        description: 'Mafia on your local network.',                  tags: ['JS', 'multiplayer', 'local-network'] },
+        { name: 'Local Secret Hitler', repo: 'localsecrethitler', description: 'Local Secret Hitler.',                          tags: ['JS', 'multiplayer', 'local-network'] },
+        { name: 'Wavelength',          repo: 'Wavelength',        description: 'Wavelength party game.',                        tags: ['HTML', 'multiplayer'] },
+        { name: 'Gamut',               repo: 'gamut',             description: 'Colour matching game.',                         tags: ['JS', 'casual'] },
+        { name: 'ProWordle',           repo: 'prowordle',         description: 'Wordle Pro Plus.',                              tags: ['word-game'] },
+        { name: 'Dicer',               repo: 'Dicer',             description: 'Dice roller.',                                  tags: ['JS', 'utility-game'] }
+      ]
+    };
+
+    const GH_USER = 'IamYVJ';          // repo URL — mixed case
+    const PAGES_HOST = 'iamyvj.github.io'; // live URL — lowercase host
+
+    const codeUrl = (repo) => `https://github.com/${GH_USER}/${repo}`;
+    const liveUrl = (repo) => `https://${PAGES_HOST}/${repo}/`;
+
+    const escapeHtml = (s) => String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    const GH_GLYPH = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>';
+    const LIVE_GLYPH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg>';
+
+    function statusClass(status) {
+      const k = String(status).toLowerCase();
+      if (k === 'new') return 'status-new';
+      if (k === 'wip') return 'status-wip';
+      if (k === 'beta') return 'status-beta';
+      return 'status-beta';
+    }
+
+    function buildCard(item) {
+      const live = liveUrl(item.repo);
+      const code = codeUrl(item.repo);
+      const tagsHtml = item.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+      const statusHtml = item.status
+        ? `<span class="status-badge ${statusClass(item.status)}">${escapeHtml(item.status)}</span>`
+        : '';
+
+      const article = document.createElement('article');
+      article.className = 'card';
+      article.dataset.name = item.name.toLowerCase();
+      article.dataset.desc = item.description.toLowerCase();
+      article.dataset.tags = item.tags.map(t => t.toLowerCase()).join('|');
+
+      article.innerHTML = `
+        <div class="card-top">
+          <h3>${escapeHtml(item.name)}</h3>
+          ${statusHtml}
+        </div>
+        <p class="desc">${escapeHtml(item.description)}</p>
+        <div class="card-tags">${tagsHtml}</div>
+        <div class="card-actions">
+          <a class="btn btn-live" href="${live}" target="_blank" rel="noopener noreferrer"
+             aria-label="Open ${escapeHtml(item.name)} live (opens in a new tab)">${LIVE_GLYPH}<span>Live</span></a>
+          <a class="btn btn-code" href="${code}" target="_blank" rel="noopener noreferrer"
+             aria-label="View ${escapeHtml(item.name)} source on GitHub (opens in a new tab)">${GH_GLYPH}<span>Code</span></a>
+        </div>`;
+      return article;
+    }
+
+    // ---- Render grids ----
+    const toolsGrid = document.getElementById('tools-grid');
+    const gamesGrid = document.getElementById('games-grid');
+    PROJECTS.tools.forEach(p => toolsGrid.appendChild(buildCard(p)));
+    PROJECTS.games.forEach(p => gamesGrid.appendChild(buildCard(p)));
+
+    const TOTAL = PROJECTS.tools.length + PROJECTS.games.length;
+    const allCards = Array.from(document.querySelectorAll('.card'));
+
+    // ---- Tag chips ----
+    const tagFilter = document.getElementById('tag-filter');
+    const activeTags = new Set();
+    const allTags = [...new Set(
+      [...PROJECTS.tools, ...PROJECTS.games].flatMap(p => p.tags)
+    )].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+    allTags.forEach(tag => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip';
+      chip.textContent = tag;
+      chip.setAttribute('aria-pressed', 'false');
+      chip.dataset.tag = tag.toLowerCase();
+      chip.addEventListener('click', () => {
+        const key = chip.dataset.tag;
+        if (activeTags.has(key)) { activeTags.delete(key); chip.setAttribute('aria-pressed', 'false'); }
+        else { activeTags.add(key); chip.setAttribute('aria-pressed', 'true'); }
+        applyFilters();
+      });
+      tagFilter.appendChild(chip);
+    });
+
+    const resetChip = document.createElement('button');
+    resetChip.type = 'button';
+    resetChip.className = 'chip chip-reset';
+    resetChip.textContent = 'Clear filters';
+    resetChip.addEventListener('click', () => {
+      activeTags.clear();
+      tagFilter.querySelectorAll('.chip[aria-pressed]').forEach(c => c.setAttribute('aria-pressed', 'false'));
+      searchInput.value = '';
+      searchBox.classList.remove('has-value');
+      applyFilters();
+      searchInput.focus();
+    });
+    tagFilter.appendChild(resetChip);
+
+    // ---- Search + filter logic ----
+    const searchInput = document.getElementById('search');
+    const searchBox = document.getElementById('search-box');
+    const searchClear = document.getElementById('search-clear');
+    const resultCount = document.getElementById('result-count');
+    const emptyState = document.getElementById('empty-state');
+    const toolsSection = document.getElementById('tools');
+    const gamesSection = document.getElementById('games');
+    const toolsCount = document.getElementById('tools-count');
+    const gamesCount = document.getElementById('games-count');
+
+    function cardMatches(card, query) {
+      const matchesQuery = !query ||
+        card.dataset.name.includes(query) ||
+        card.dataset.desc.includes(query) ||
+        card.dataset.tags.includes(query);
+      const cardTags = card.dataset.tags ? card.dataset.tags.split('|') : [];
+      const matchesTags = activeTags.size === 0 || cardTags.some(t => activeTags.has(t));
+      return matchesQuery && matchesTags;
+    }
+
+    function applyFilters() {
+      const query = searchInput.value.trim().toLowerCase();
+      let shown = 0, toolsShown = 0, gamesShown = 0;
+
+      allCards.forEach(card => {
+        const visible = cardMatches(card, query);
+        card.style.display = visible ? '' : 'none';
+        if (visible) {
+          shown++;
+          if (toolsGrid.contains(card)) toolsShown++; else gamesShown++;
+        }
+      });
+
+      toolsSection.style.display = toolsShown ? '' : 'none';
+      gamesSection.style.display = gamesShown ? '' : 'none';
+      emptyState.classList.toggle('show', shown === 0);
+
+      toolsCount.textContent = toolsShown ? `${toolsShown}` : '';
+      gamesCount.textContent = gamesShown ? `${gamesShown}` : '';
+
+      const filtering = query || activeTags.size > 0;
+      resultCount.textContent = filtering
+        ? `Showing ${shown} of ${TOTAL} projects`
+        : `${TOTAL} projects`;
+    }
+
+    searchInput.addEventListener('input', () => {
+      searchBox.classList.toggle('has-value', searchInput.value.length > 0);
+      applyFilters();
+    });
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchBox.classList.remove('has-value');
+      applyFilters();
+      searchInput.focus();
+    });
+
+    // ---- Theme toggle ----
+    const themeToggle = document.getElementById('theme-toggle');
+    const root = document.documentElement;
+
+    function syncToggle() {
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      themeToggle.setAttribute('aria-pressed', String(isDark));
+      themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+    function setTheme(theme) {
+      root.setAttribute('data-theme', theme);
+      try { localStorage.setItem('yvj-theme', theme); } catch (e) {}
+      syncToggle();
+    }
+    themeToggle.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      setTheme(next);
+    });
+
+    // Follow system changes only when the user hasn't picked explicitly.
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        try { if (localStorage.getItem('yvj-theme')) return; } catch (err) {}
+        root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+        syncToggle();
+      });
+    }
+
+    // ---- Init ----
+    syncToggle();
+    applyFilters();
+  </script>
+</body>
+</html>
