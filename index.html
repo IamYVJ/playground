@@ -273,9 +273,7 @@
       position: sticky;
       top: 0;
       z-index: 20;
-      background: color-mix(in srgb, var(--bg) 88%, transparent);
-      backdrop-filter: saturate(150%) blur(10px);
-      -webkit-backdrop-filter: saturate(150%) blur(10px);
+      background: var(--bg);
       border-bottom: 1px solid var(--border);
       padding: 16px 0;
     }
@@ -434,7 +432,8 @@
     }
 
     /* ---------- Grid ---------- */
-    main { padding: 30px 0 24px; }
+    /* main.wrap beats the bare .wrap rule so the top/bottom padding actually applies. */
+    main.wrap { padding-top: 30px; padding-bottom: 30px; }
 
     .grid {
       display: grid;
