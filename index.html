@@ -284,6 +284,51 @@
       flex-direction: column;
       gap: 14px;
     }
+
+    /* ---------- Category tabs ---------- */
+    .tabs {
+      display: inline-flex;
+      align-self: flex-start;
+      gap: 4px;
+      padding: 4px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      max-width: 100%;
+    }
+    .tab {
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-pill);
+      padding: 8px 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+      transition: background-color 0.18s var(--ease), color 0.18s var(--ease), box-shadow 0.18s var(--ease);
+    }
+    .tab:hover { color: var(--text); }
+    .tab[aria-selected="true"] {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+    .tab-count {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0;
+      color: var(--text-faint);
+      font-variant-numeric: tabular-nums;
+    }
+    .tab[aria-selected="true"] .tab-count { color: var(--accent); }
+
     .search-row {
       display: flex;
       align-items: center;
@@ -388,41 +433,8 @@
       border-radius: 4px;
     }
 
-    /* ---------- Sections ---------- */
-    main { padding: 8px 0 24px; }
-
-    .section { padding: 38px 0 8px; scroll-margin-top: 120px; }
-    .section--games { --accent: var(--accent-games); --accent-hover: var(--accent-games-hover); --accent-soft: var(--accent-games-soft); }
-
-    .section-head {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      margin-bottom: 22px;
-    }
-    .section-head h2 {
-      margin: 0;
-      font-size: 1.32rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .section-head h2::before {
-      content: "";
-      width: 10px; height: 10px;
-      border-radius: 3px;
-      background: var(--accent);
-      box-shadow: 0 0 0 4px var(--accent-soft);
-    }
-    .section-head .count {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--text-faint);
-      font-variant-numeric: tabular-nums;
-    }
+    /* ---------- Grid ---------- */
+    main { padding: 30px 0 24px; }
 
     .grid {
       display: grid;
@@ -464,11 +476,35 @@
     }
     .card:hover::after { opacity: 1; }
 
+    /* Per-card accent: Games stay warm pink, Tools stay indigo. */
+    .card[data-cat="games"] {
+      --accent: var(--accent-games);
+      --accent-hover: var(--accent-games-hover);
+      --accent-soft: var(--accent-games-soft);
+    }
+
     .card-top {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
+    }
+    .badges {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+    .cat-badge {
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      color: var(--accent);
+      background: var(--accent-soft);
+      white-space: nowrap;
     }
     .card h3 {
       margin: 0;
@@ -631,9 +667,14 @@
     </div>
   </header>
 
-  <div class="controls" role="search">
+  <div class="controls">
     <div class="wrap controls-inner">
-      <div class="search-row">
+      <div class="tabs" role="tablist" aria-label="Filter projects by category" id="tabs">
+        <button class="tab" role="tab" type="button" data-cat="all" aria-selected="true" tabindex="0"><span class="tab-label">All</span><span class="tab-count"></span></button>
+        <button class="tab" role="tab" type="button" data-cat="tools" aria-selected="false" tabindex="-1"><span class="tab-label">Tools</span><span class="tab-count"></span></button>
+        <button class="tab" role="tab" type="button" data-cat="games" aria-selected="false" tabindex="-1"><span class="tab-label">Games</span><span class="tab-count"></span></button>
+      </div>
+      <div class="search-row" role="search">
         <div class="search-box" id="search-box">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.35-4.35"></path></svg>
           <input type="search" id="search" placeholder="Search projects by name, description or tag…" aria-label="Search projects" autocomplete="off" />
@@ -650,22 +691,8 @@
     </div>
   </div>
 
-  <main id="main" class="wrap">
-    <section class="section section--tools" id="tools" aria-labelledby="tools-heading">
-      <div class="section-head">
-        <h2 id="tools-heading">Tools</h2>
-        <span class="count" id="tools-count"></span>
-      </div>
-      <div class="grid" id="tools-grid"></div>
-    </section>
-
-    <section class="section section--games" id="games" aria-labelledby="games-heading">
-      <div class="section-head">
-        <h2 id="games-heading">Games</h2>
-        <span class="count" id="games-count"></span>
-      </div>
-      <div class="grid" id="games-grid"></div>
-    </section>
+  <main id="main" class="wrap" aria-label="Projects">
+    <div class="grid" id="grid"></div>
 
     <div class="empty-state" id="empty-state" aria-live="polite">
       <div class="big">No projects match your filters</div>
@@ -738,9 +765,10 @@
       return 'status-beta';
     }
 
-    function buildCard(item) {
+    function buildCard(item, cat) {
       const live = liveUrl(item.repo);
       const code = codeUrl(item.repo);
+      const catLabel = cat === 'tools' ? 'Tool' : 'Game';
       const tagsHtml = item.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
       const statusHtml = item.status
         ? `<span class="status-badge ${statusClass(item.status)}">${escapeHtml(item.status)}</span>`
@@ -748,6 +776,8 @@
 
       const article = document.createElement('article');
       article.className = 'card';
+      article.dataset.cat = cat;
+      article.dataset.repo = item.repo;
       article.dataset.name = item.name.toLowerCase();
       article.dataset.desc = item.description.toLowerCase();
       article.dataset.tags = item.tags.map(t => t.toLowerCase()).join('|');
@@ -755,7 +785,10 @@
       article.innerHTML = `
         <div class="card-top">
           <h3>${escapeHtml(item.name)}</h3>
-          ${statusHtml}
+          <div class="badges">
+            ${statusHtml}
+            <span class="cat-badge">${catLabel}</span>
+          </div>
         </div>
         <p class="desc">${escapeHtml(item.description)}</p>
         <div class="card-tags">${tagsHtml}</div>
@@ -768,11 +801,10 @@
       return article;
     }
 
-    // ---- Render grids ----
-    const toolsGrid = document.getElementById('tools-grid');
-    const gamesGrid = document.getElementById('games-grid');
-    PROJECTS.tools.forEach(p => toolsGrid.appendChild(buildCard(p)));
-    PROJECTS.games.forEach(p => gamesGrid.appendChild(buildCard(p)));
+    // ---- Render the single grid (Tools then Games; reordered by date once fetched) ----
+    const grid = document.getElementById('grid');
+    PROJECTS.tools.forEach(p => grid.appendChild(buildCard(p, 'tools')));
+    PROJECTS.games.forEach(p => grid.appendChild(buildCard(p, 'games')));
 
     const TOTAL = PROJECTS.tools.length + PROJECTS.games.length;
     const allCards = Array.from(document.querySelectorAll('.card'));
@@ -809,7 +841,7 @@
       tagFilter.querySelectorAll('.chip[aria-pressed]').forEach(c => c.setAttribute('aria-pressed', 'false'));
       searchInput.value = '';
       searchBox.classList.remove('has-value');
-      applyFilters();
+      selectTab('all');
       searchInput.focus();
     });
     tagFilter.appendChild(resetChip);
@@ -820,10 +852,6 @@
     const searchClear = document.getElementById('search-clear');
     const resultCount = document.getElementById('result-count');
     const emptyState = document.getElementById('empty-state');
-    const toolsSection = document.getElementById('tools');
-    const gamesSection = document.getElementById('games');
-    const toolsCount = document.getElementById('tools-count');
-    const gamesCount = document.getElementById('games-count');
 
     function cardMatches(card, query) {
       const matchesQuery = !query ||
@@ -837,28 +865,23 @@
 
     function applyFilters() {
       const query = searchInput.value.trim().toLowerCase();
-      let shown = 0, toolsShown = 0, gamesShown = 0;
+      let shown = 0;
 
       allCards.forEach(card => {
-        const visible = cardMatches(card, query);
+        const catOk = currentCategory === 'all' || card.dataset.cat === currentCategory;
+        const visible = catOk && cardMatches(card, query);
         card.style.display = visible ? '' : 'none';
-        if (visible) {
-          shown++;
-          if (toolsGrid.contains(card)) toolsShown++; else gamesShown++;
-        }
+        if (visible) shown++;
       });
 
-      toolsSection.style.display = toolsShown ? '' : 'none';
-      gamesSection.style.display = gamesShown ? '' : 'none';
       emptyState.classList.toggle('show', shown === 0);
 
-      toolsCount.textContent = toolsShown ? `${toolsShown}` : '';
-      gamesCount.textContent = gamesShown ? `${gamesShown}` : '';
-
+      const categoryTotal = currentCategory === 'tools' ? PROJECTS.tools.length
+        : currentCategory === 'games' ? PROJECTS.games.length : TOTAL;
       const filtering = query || activeTags.size > 0;
       resultCount.textContent = filtering
-        ? `Showing ${shown} of ${TOTAL} projects`
-        : `${TOTAL} projects`;
+        ? `Showing ${shown} of ${categoryTotal} projects`
+        : `${categoryTotal} projects`;
     }
 
     searchInput.addEventListener('input', () => {
@@ -870,6 +893,37 @@
       searchBox.classList.remove('has-value');
       applyFilters();
       searchInput.focus();
+    });
+
+    // ---- Category tabs (All / Tools / Games) ----
+    let currentCategory = 'all';
+    const tabButtons = Array.from(document.querySelectorAll('#tabs .tab'));
+    const TAB_TOTALS = { all: TOTAL, tools: PROJECTS.tools.length, games: PROJECTS.games.length };
+    tabButtons.forEach(btn => {
+      btn.querySelector('.tab-count').textContent = TAB_TOTALS[btn.dataset.cat];
+    });
+
+    function selectTab(cat, focus) {
+      currentCategory = cat;
+      tabButtons.forEach(btn => {
+        const active = btn.dataset.cat === cat;
+        btn.setAttribute('aria-selected', String(active));
+        btn.tabIndex = active ? 0 : -1;
+        if (active && focus) btn.focus();
+      });
+      applyFilters();
+    }
+
+    tabButtons.forEach((btn, i) => {
+      btn.addEventListener('click', () => selectTab(btn.dataset.cat, false));
+      btn.addEventListener('keydown', (e) => {
+        let next = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (i + 1) % tabButtons.length;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (i - 1 + tabButtons.length) % tabButtons.length;
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = tabButtons.length - 1;
+        if (next !== null) { e.preventDefault(); selectTab(tabButtons[next].dataset.cat, true); }
+      });
     });
 
     // ---- Theme toggle ----
@@ -900,9 +954,32 @@
       });
     }
 
+    // ---- Sort by date (newest first) using each repo's last-pushed date ----
+    // Best-effort: if the GitHub API is unreachable or rate-limited, the listed order is kept.
+    async function sortByDate() {
+      const cards = allCards.map(el => ({ el, repo: el.dataset.repo, ts: -Infinity }));
+      const results = await Promise.allSettled(cards.map(c =>
+        fetch(`https://api.github.com/repos/${GH_USER}/${c.repo}`, {
+          headers: { 'Accept': 'application/vnd.github+json' }
+        }).then(r => r.ok ? r.json() : null)
+      ));
+
+      let any = false;
+      results.forEach((res, i) => {
+        const data = res.status === 'fulfilled' ? res.value : null;
+        const t = data && data.pushed_at ? Date.parse(data.pushed_at) : NaN;
+        if (!isNaN(t)) { cards[i].ts = t; any = true; }
+      });
+      if (!any) return; // nothing came back — leave the original order untouched
+
+      cards.sort((a, b) => b.ts - a.ts);
+      cards.forEach(c => grid.appendChild(c.el)); // re-append in date order
+    }
+
     // ---- Init ----
     syncToggle();
     applyFilters();
+    sortByDate();
   </script>
 </body>
 </html>
