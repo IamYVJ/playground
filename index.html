@@ -393,16 +393,44 @@
 
     .tag-filter {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 8px;
-      align-items: center;
+      align-items: flex-start;
     }
     .tag-filter-label {
       font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-faint);
       margin-right: 2px;
+      flex: 0 0 auto;
+      line-height: 34px;
     }
+    .tag-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .tag-filter.collapsed .tag-chips { max-height: 38px; }
+    .tag-toggle {
+      flex: 0 0 auto;
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: none;
+      border: none;
+      padding: 6px 6px;
+      line-height: 22px;
+      cursor: pointer;
+      white-space: nowrap;
+      border-radius: var(--radius-pill);
+      transition: color 0.18s var(--ease);
+    }
+    .tag-toggle:hover { text-decoration: underline; }
+    .tag-toggle[hidden] { display: none; }
     .chip {
       font: inherit;
       font-size: 0.82rem;
@@ -691,9 +719,10 @@
         </div>
         <span class="result-count" id="result-count" aria-live="polite"></span>
       </div>
-      <div class="tag-filter" id="tag-filter" role="group" aria-label="Filter projects by tag">
+      <div class="tag-filter collapsed" id="tag-filter" role="group" aria-label="Filter projects by tag">
         <span class="tag-filter-label">Tags</span>
-        <!-- tag chips injected here -->
+        <div class="tag-chips" id="tag-chips"><!-- tag chips injected here --></div>
+        <button class="tag-toggle" id="tag-toggle" type="button" aria-expanded="false" aria-controls="tag-chips" hidden>Show all</button>
       </div>
     </div>
   </div>
@@ -821,6 +850,8 @@
 
     // ---- Tag chips ----
     const tagFilter = document.getElementById('tag-filter');
+    const tagChips = document.getElementById('tag-chips');
+    const tagToggle = document.getElementById('tag-toggle');
     const activeTags = new Set();
     const allTags = [...new Set(
       [...PROJECTS.tools, ...PROJECTS.games].flatMap(p => p.tags)
@@ -839,7 +870,7 @@
         else { activeTags.add(key); chip.setAttribute('aria-pressed', 'true'); }
         applyFilters();
       });
-      tagFilter.appendChild(chip);
+      tagChips.appendChild(chip);
     });
 
     const resetChip = document.createElement('button');
@@ -854,7 +885,26 @@
       selectTab('all');
       searchInput.focus();
     });
-    tagFilter.appendChild(resetChip);
+    tagChips.appendChild(resetChip);
+
+    // ---- Collapsible tag row ----
+    tagToggle.addEventListener('click', () => {
+      const collapsed = tagFilter.classList.toggle('collapsed');
+      tagToggle.setAttribute('aria-expanded', String(!collapsed));
+      tagToggle.textContent = collapsed ? 'Show all' : 'Show less';
+    });
+    function updateTagToggle() {
+      const firstChip = tagChips.firstElementChild;
+      const rowH = firstChip ? firstChip.offsetHeight : 34;
+      tagToggle.hidden = tagChips.scrollHeight <= rowH + 6;
+    }
+    updateTagToggle();
+    let tagResizeId;
+    window.addEventListener('resize', () => {
+      clearTimeout(tagResizeId);
+      tagResizeId = setTimeout(updateTagToggle, 150);
+    });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateTagToggle);
 
     // ---- Search + filter logic ----
     const searchInput = document.getElementById('search');
