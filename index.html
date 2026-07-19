@@ -506,8 +506,9 @@
     }
     .card:hover::after { opacity: 1; }
 
-    /* Per-card accent: Games stay warm pink, Tools stay indigo. */
-    .card[data-cat="games"] {
+    /* Per-card accent: Games stay warm pink, Tools stay indigo.
+       ~= matches a space-separated word so cards in both categories (data-cat="tools games") pick up the games accent. */
+    .card[data-cat~="games"] {
       --accent: var(--accent-games);
       --accent-hover: var(--accent-games-hover);
       --accent-soft: var(--accent-games-soft);
@@ -749,11 +750,13 @@
   <script>
     /* =========================================================
        Project data — add a new project by appending one entry.
+       Buckets: `tools`, `games`, and `both` (shows under Tools AND Games).
        Both links are derived from `repo`:
          Code → https://github.com/IamYVJ/{repo}
          Live → https://iamyvj.github.io/{repo}/
        The {repo} segment is case-sensitive in both URLs.
        Optional `status` renders a badge: "New" | "WIP" | "Beta".
+       Optional `noLive: true` hides the Live button (repo with no Pages site).
        ========================================================= */
     const PROJECTS = {
       tools: [
@@ -765,7 +768,9 @@
         { name: 'Password Generator', repo: 'password-generator',description: 'Generate secure passwords.',                    tags: ['CSS', 'security'] },
         { name: 'Smart Code',         repo: 'smart-code',        description: 'Generate QR codes & barcodes.',                 tags: ['JS', 'QR', 'barcode'] },
         { name: 'FixtureForge',       repo: 'FixtureForge',      description: 'Sports fixture generator.',                     tags: ['HTML', 'sports'] },
-        { name: 'PickleLog',          repo: 'picklelog',         description: 'Pickleball scoring.',                           tags: ['JS', 'sports'] }
+        { name: 'PickleLog',          repo: 'picklelog',         description: 'Pickleball scoring.',                           tags: ['JS', 'sports'] },
+        { name: 'Algorithm Visualizer', repo: 'algorithm-visualizer', description: 'Watch sorting, pathfinding & more algorithms run step by step.', tags: ['JS', 'education', 'dataviz'] },
+        { name: 'Amazon Order Stats', repo: 'amazon_order_statisics', description: 'Tally your Amazon order count and total spend — a local Python script.', tags: ['Python', 'CLI', 'data'], noLive: true }
       ],
       games: [
         { name: 'Local Codenames',     repo: 'localcodenames',    description: 'Codenames on your local network.',             tags: ['JS', 'multiplayer', 'local-network'] },
@@ -780,9 +785,23 @@
         { name: 'Tic Tac Toe',         repo: 'Game-TicTacToe',     description: 'Classic tic-tac-toe.',                          tags: ['JS', 'casual'] },
         { name: 'Pig Game',            repo: 'Game-PigGame',       description: 'Press-your-luck dice race to 100.',             tags: ['JS', 'casual'] },
         { name: 'Guess the Number',    repo: 'Game-GuessTheNumber', description: 'Guess the secret number.',                     tags: ['JS', 'casual'] },
-        { name: 'Retro Snake',         repo: 'retro-snake',         description: 'Classic snake, retro style.',                   tags: ['JS', 'arcade'] }
+        { name: 'Retro Snake',         repo: 'retro-snake',         description: 'Classic snake, retro style.',                   tags: ['JS', 'arcade'] },
+        { name: 'Local Undercover',    repo: 'localundercover',     description: 'Social deduction word party game for your local network.', tags: ['JS', 'multiplayer', 'local-network'] },
+        { name: 'Local Taboo',         repo: 'localtaboo',          description: 'Taboo word party game on your local network.',  tags: ['JS', 'multiplayer', 'local-network'] }
+      ],
+      both: [
+        { name: 'Count 21',            repo: 'count-21',            description: 'Blackjack strategy & probability trainer.',     tags: ['JS', 'math', 'education'] },
+        { name: 'Roulette Odds',       repo: 'roulette-odds',       description: 'Roulette probability & house-edge calculator.', tags: ['JS', 'math', 'education'] }
       ]
     };
+
+    // Flatten the buckets into one list, tagging each project with the categories it belongs to.
+    const ALL_PROJECTS = [
+      ...PROJECTS.tools.map(p => ({ ...p, cats: ['tools'] })),
+      ...PROJECTS.games.map(p => ({ ...p, cats: ['games'] })),
+      ...(PROJECTS.both || []).map(p => ({ ...p, cats: ['tools', 'games'] }))
+    ];
+    const catCount = (cat) => ALL_PROJECTS.filter(p => p.cats.includes(cat)).length;
 
     const GH_USER = 'IamYVJ';          // repo URL — mixed case
     const PAGES_HOST = 'iamyvj.github.io'; // live URL — lowercase host
@@ -805,18 +824,25 @@
       return 'status-beta';
     }
 
-    function buildCard(item, cat) {
+    function buildCard(item) {
+      const cats = item.cats;
       const live = liveUrl(item.repo);
       const code = codeUrl(item.repo);
-      const catLabel = cat === 'tools' ? 'Tool' : 'Game';
+      const catBadges = cats
+        .map(c => `<span class="cat-badge">${c === 'tools' ? 'Tool' : 'Game'}</span>`)
+        .join('');
       const tagsHtml = item.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
       const statusHtml = item.status
         ? `<span class="status-badge ${statusClass(item.status)}">${escapeHtml(item.status)}</span>`
         : '';
+      const liveBtn = item.noLive
+        ? ''
+        : `<a class="btn btn-live" href="${live}" target="_blank" rel="noopener noreferrer"
+             aria-label="Open ${escapeHtml(item.name)} live (opens in a new tab)">${LIVE_GLYPH}<span>Live</span></a>`;
 
       const article = document.createElement('article');
       article.className = 'card';
-      article.dataset.cat = cat;
+      article.dataset.cat = cats.join(' ');
       article.dataset.repo = item.repo;
       article.dataset.name = item.name.toLowerCase();
       article.dataset.desc = item.description.toLowerCase();
@@ -827,26 +853,24 @@
           <h3>${escapeHtml(item.name)}</h3>
           <div class="badges">
             ${statusHtml}
-            <span class="cat-badge">${catLabel}</span>
+            ${catBadges}
           </div>
         </div>
         <p class="desc">${escapeHtml(item.description)}</p>
         <div class="card-tags">${tagsHtml}</div>
         <div class="card-actions">
-          <a class="btn btn-live" href="${live}" target="_blank" rel="noopener noreferrer"
-             aria-label="Open ${escapeHtml(item.name)} live (opens in a new tab)">${LIVE_GLYPH}<span>Live</span></a>
+          ${liveBtn}
           <a class="btn btn-code" href="${code}" target="_blank" rel="noopener noreferrer"
              aria-label="View ${escapeHtml(item.name)} source on GitHub (opens in a new tab)">${GH_GLYPH}<span>Code</span></a>
         </div>`;
       return article;
     }
 
-    // ---- Render the single grid (Tools then Games; reordered by date once fetched) ----
+    // ---- Render the single grid (source order; reordered by date once fetched) ----
     const grid = document.getElementById('grid');
-    PROJECTS.tools.forEach(p => grid.appendChild(buildCard(p, 'tools')));
-    PROJECTS.games.forEach(p => grid.appendChild(buildCard(p, 'games')));
+    ALL_PROJECTS.forEach(p => grid.appendChild(buildCard(p)));
 
-    const TOTAL = PROJECTS.tools.length + PROJECTS.games.length;
+    const TOTAL = ALL_PROJECTS.length;
     const allCards = Array.from(document.querySelectorAll('.card'));
 
     // ---- Tag chips ----
@@ -855,7 +879,7 @@
     const tagToggle = document.getElementById('tag-toggle');
     const activeTags = new Set();
     const allTags = [...new Set(
-      [...PROJECTS.tools, ...PROJECTS.games].flatMap(p => p.tags)
+      ALL_PROJECTS.flatMap(p => p.tags)
     )].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
     allTags.forEach(tag => {
@@ -929,7 +953,7 @@
       let shown = 0;
 
       allCards.forEach(card => {
-        const catOk = currentCategory === 'all' || card.dataset.cat === currentCategory;
+        const catOk = currentCategory === 'all' || card.dataset.cat.split(' ').includes(currentCategory);
         const visible = catOk && cardMatches(card, query);
         card.style.display = visible ? '' : 'none';
         if (visible) shown++;
@@ -937,8 +961,7 @@
 
       emptyState.classList.toggle('show', shown === 0);
 
-      const categoryTotal = currentCategory === 'tools' ? PROJECTS.tools.length
-        : currentCategory === 'games' ? PROJECTS.games.length : TOTAL;
+      const categoryTotal = currentCategory === 'all' ? TOTAL : catCount(currentCategory);
       const filtering = query || activeTags.size > 0;
       resultCount.textContent = filtering
         ? `Showing ${shown} of ${categoryTotal} projects`
@@ -959,7 +982,7 @@
     // ---- Category tabs (All / Tools / Games) ----
     let currentCategory = 'all';
     const tabButtons = Array.from(document.querySelectorAll('#tabs .tab'));
-    const TAB_TOTALS = { all: TOTAL, tools: PROJECTS.tools.length, games: PROJECTS.games.length };
+    const TAB_TOTALS = { all: TOTAL, tools: catCount('tools'), games: catCount('games') };
     tabButtons.forEach(btn => {
       btn.querySelector('.tab-count').textContent = TAB_TOTALS[btn.dataset.cat];
     });
