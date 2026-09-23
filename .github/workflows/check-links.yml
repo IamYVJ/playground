@@ -24,11 +24,16 @@ jobs:
   links:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Check every Code and Live link
+        env:
+          # Lifts the repo-list call from 60/hr (anonymous, shared across every runner on the
+          # same egress IP) to 1000/hr. Without it this step is at the mercy of whatever else
+          # is hitting the API from the same address.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/check-links.mjs

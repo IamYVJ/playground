@@ -51,6 +51,11 @@ node scripts/refresh-dates.mjs --check  # report drift without writing; exits 1 
 node scripts/check-links.mjs            # verify every Code and Live URL resolves
 ```
 
+`check-links` verifies Code links against the GitHub API repo list rather than fetching each
+`github.com` page — dozens of rapid unauthenticated requests from one IP trip GitHub's secondary
+rate limit, which is strict on CI runners. Live links are probed over HTTP (only the Pages host
+can confirm a site is served) with retries on 429 and 5xx.
+
 `refresh-dates` also reports repositories that exist on GitHub but are missing from `PROJECTS`.
 Repos that should never be listed live in [`scripts/ignored-repos.json`](scripts/ignored-repos.json);
 forks and archived repos are skipped automatically.
