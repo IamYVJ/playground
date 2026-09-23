@@ -1,0 +1,83 @@
+name: Refresh project dates
+
+# Card order is computed from the hard-coded `date` on each PROJECTS entry, so a repo that
+# gets pushed without its date being bumped here quietly sinks down the grid. This job keeps
+# those dates honest and flags repos that are not listed yet.
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays, 06:00 UTC
+  workflow_dispatch:       # and on demand from the Actions tab
+
+# Least privilege: commit the date refresh, and file an issue about unlisted repos.
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: refresh-dates
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Refresh dates and detect unlisted repos
+        id: refresh
+        env:
+          # Lifts the GitHub API rate limit from 60/hr (anonymous) to 1000/hr.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/refresh-dates.mjs
+
+      - name: Commit refreshed dates
+        if: steps.refresh.outputs.stale-count != '0'
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          # `git diff --staged --quiet` exits 1 when there IS something staged, so this
+          # guards against an empty commit if the script reported drift but wrote nothing.
+          if git diff --staged --quiet; then
+            echo 'Nothing staged; skipping commit.'
+          else
+            git commit -m 'Refresh project dates from GitHub'
+            git push
+          fi
+
+      - name: File an issue for unlisted repos
+        if: steps.refresh.outputs.new-count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_REPOS: ${{ steps.refresh.outputs.new-repos }}
+        run: |
+          set -euo pipefail
+
+          # Built with printf, not a heredoc: this whole script is a YAML block scalar, so
+          # any literal newline inside a quoted shell string would carry YAML's indentation
+          # into the issue body and Markdown would render it as an indented code block.
+          BODY=$(printf '%s\n' \
+            'These repositories are not listed in `index.html`:' \
+            '' \
+            "${NEW_REPOS}" \
+            '' \
+            'Add each one to the `PROJECTS` table in `index.html`, or add it to' \
+            '`scripts/ignored-repos.json` to stop it being reported.' \
+            '' \
+            '<sub>Opened automatically by `.github/workflows/refresh-dates.yml`.</sub>')
+
+          # Reuse the existing open issue rather than filing a fresh one every Monday.
+          EXISTING=$(gh issue list --label new-repos --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            gh issue edit "$EXISTING" --body "$BODY"
+            echo "Updated issue #$EXISTING"
+          else
+            # The label must exist before it can be applied; ignore the error if it already does.
+            gh label create new-repos --description 'Repos not yet listed in the playground' --color FBCA04 2>/dev/null || true
+            gh issue create --title 'Unlisted repos found' --label new-repos --body "$BODY"
+          fi

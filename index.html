@@ -787,7 +787,7 @@
         { name: 'Data Transformer',   repo: 'data-transformer',  date: '2026-06-30', description: 'Transform and reshape data between formats.',   tags: ['JS', 'data'] },
         { name: 'JSON Explorer',      repo: 'json-explorer',     date: '2026-06-30', description: 'Explore and navigate JSON as a tree.',          tags: ['JS', 'data', 'dev-tool'] },
         { name: 'Sankey Studio',      repo: 'sankeystudio',      date: '2026-06-11', description: 'Sankey chart maker.',                           tags: ['JS', 'dataviz'] },
-        { name: 'SecureKit',          repo: 'SecureKit',         date: '2026-09-20', description: 'Secure PDF toolkit.',                           tags: ['JS', 'PDF', 'privacy'] },
+        { name: 'SecureKit',          repo: 'SecureKit',         date: '2026-09-23', description: 'Secure PDF toolkit.',                           tags: ['JS', 'PDF', 'privacy'] },
         { name: 'Password Generator', repo: 'password-generator',date: '2026-03-16', description: 'Generate secure passwords.',                    tags: ['CSS', 'security'] },
         { name: 'Smart Code',         repo: 'smart-code',        date: '2026-06-24', description: 'Generate QR codes & barcodes.',                 tags: ['JS', 'QR', 'barcode'] },
         { name: 'FixtureForge',       repo: 'FixtureForge',      date: '2026-03-28', description: 'Sports fixture generator.',                     tags: ['HTML', 'sports'] },
@@ -797,7 +797,7 @@
         { name: 'Amazon Order Stats', repo: 'amazon_order_statistics', date: '2026-09-20', description: 'Tally your Amazon order count and total spend — a local Python script.', tags: ['Python', 'CLI', 'data'], noLive: true }
       ],
       games: [
-        { name: 'Local Codenames',     repo: 'localcodenames',    date: '2026-09-19', description: 'Codenames on your local network.',             tags: ['JS', 'multiplayer', 'local-network'] },
+        { name: 'Local Codenames',     repo: 'localcodenames',    date: '2026-09-20', description: 'Codenames on your local network.',             tags: ['JS', 'multiplayer', 'local-network'] },
         { name: 'Local Fish Bowl',     repo: 'localfishbowl',     date: '2026-09-01', description: 'Fish Bowl party game.',                         tags: ['JS', 'multiplayer', 'local-network'] },
         { name: 'Local Avalon',        repo: 'localavalon',       date: '2026-08-31', description: 'Locally hosted Avalon.',                        tags: ['JS', 'multiplayer', 'local-network'] },
         { name: 'Local Mafia',         repo: 'localmafia',        date: '2026-09-01', description: 'Mafia on your local network.',                  tags: ['JS', 'multiplayer', 'local-network'] },
@@ -816,7 +816,7 @@
         { name: 'ChromaCode',          repo: 'chromacode',          date: '2026-09-01', description: 'Crack the hidden colour code — a deduction puzzle.', tags: ['JS', 'puzzle', 'multiplayer'] },
         { name: 'Promptly',            repo: 'promptly',            date: '2026-09-01', description: 'Act, draw & guess — party game for two teams on one phone.', tags: ['JS', 'party', 'multiplayer'] },
         { name: 'Court Piece',         repo: 'courtpiece',          date: '2026-09-20', description: 'Rang — 4-player trick-taking card game, hands stay on your own device.', tags: ['JS', 'cards', 'multiplayer'] },
-        { name: 'Reversi',             repo: 'reversi',             date: '2026-09-20', description: 'Othello — hotseat, remote or against the bot.',  tags: ['JS', 'board-game', 'multiplayer'] },
+        { name: 'Reversi',             repo: 'reversi',             date: '2026-09-21', description: 'Othello — hotseat, remote or against the bot.',  tags: ['JS', 'board-game', 'multiplayer'] },
         { name: 'Battlegrid',          repo: 'battlegrid',          date: '2026-09-14', description: 'Battleship for two phones — no referee, provably fair.', tags: ['JS', 'board-game', 'multiplayer'] },
         { name: 'Literature',          repo: 'literature',          date: '2026-08-31', description: 'Collect the half-suits — Fish card game with bots.', tags: ['JS', 'cards', 'multiplayer'] }
       ],
@@ -877,9 +877,11 @@
       article.className = 'card';
       article.dataset.cat = cats.join(' ');
       article.dataset.repo = item.repo;
-      article.dataset.name = item.name.toLowerCase();
-      article.dataset.desc = item.description.toLowerCase();
       article.dataset.tags = item.tags.map(t => t.toLowerCase()).join('|');
+      // One flat haystack for free-text search, so a multi-word query can span fields
+      // ("reversi othello" = name + description). Kept separate from dataset.tags, which
+      // stays pipe-delimited for exact whole-tag matching in the tag filter.
+      article.dataset.haystack = [item.name, item.description, ...item.tags].join(' ').toLowerCase();
 
       article.innerHTML = `
         <div class="card-top">
@@ -971,11 +973,13 @@
     const resultCount = document.getElementById('result-count');
     const emptyState = document.getElementById('empty-state');
 
-    function cardMatches(card, query) {
-      const matchesQuery = !query ||
-        card.dataset.name.includes(query) ||
-        card.dataset.desc.includes(query) ||
-        card.dataset.tags.includes(query);
+    // `terms` is the query split into words; every term must appear somewhere in the card's
+    // haystack (AND across terms, OR across fields). Matching each field separately instead
+    // would drop any query whose words straddle two fields — "reversi othello" is the name
+    // plus a word from the description, and would find nothing.
+    function cardMatches(card, terms) {
+      const haystack = card.dataset.haystack;
+      const matchesQuery = terms.every(t => haystack.includes(t));
       const cardTags = card.dataset.tags ? card.dataset.tags.split('|') : [];
       const matchesTags = activeTags.size === 0 || cardTags.some(t => activeTags.has(t));
       return matchesQuery && matchesTags;
@@ -983,11 +987,15 @@
 
     function applyFilters() {
       const query = searchInput.value.trim().toLowerCase();
+      // Split once per keystroke, not once per card. `.filter(Boolean)` drops the empty
+      // string that a blank or all-whitespace query would otherwise produce, leaving []
+      // — and `[].every()` is true, so an empty search correctly matches everything.
+      const terms = query.split(/\s+/).filter(Boolean);
       let shown = 0;
 
       allCards.forEach(card => {
         const catOk = currentCategory === 'all' || card.dataset.cat.split(' ').includes(currentCategory);
-        const visible = catOk && cardMatches(card, query);
+        const visible = catOk && cardMatches(card, terms);
         card.style.display = visible ? '' : 'none';
         if (visible) shown++;
       });

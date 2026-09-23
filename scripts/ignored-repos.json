@@ -1,0 +1,21 @@
+{
+  "comment": "Repos deliberately absent from the playground. Forks and archived repos are skipped automatically and need no entry here. Delete a name from this list to have the next new-repo check propose it again.",
+  "ignored": [
+    "playground",
+    "IamYVJ.github.io",
+
+    "APMiniProject2",
+    "Amadeus",
+    "Ashoka_Dining_Chatbot",
+    "Ashoka_Grade_Checker",
+    "CodeChef_Rating_Update_Bot",
+    "Files_Downloader",
+    "Game-Bulls_and_Cows",
+    "ICSE_Class_X_Internal_Project_JAVA",
+    "Indian_Railway_Stations_JSON",
+    "Library_Management_System",
+    "PropreAPI",
+    "SpeedTest_LCD",
+    "hello-world"
+  ]
+}
