@@ -81,3 +81,23 @@ jobs:
             gh label create new-repos --description 'Repos not yet listed in the playground' --color FBCA04 2>/dev/null || true
             gh issue create --title 'Unlisted repos found' --label new-repos --body "$BODY"
           fi
+
+      # Counterpart to the step above: without this the issue is opened and kept current but
+      # never retired, so it sits open forever once the repos it names have been added.
+      # The two steps' conditions are mutually exclusive, so exactly one runs each time.
+      - name: Close the issue once every repo is listed
+        if: steps.refresh.outputs.new-count == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          EXISTING=$(gh issue list --label new-repos --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -z "$EXISTING" ]; then
+            echo 'No open new-repos issue; nothing to close.'
+          else
+            gh issue close "$EXISTING" \
+              --comment 'Every repository listed here is now in `index.html` (or ignored). Closing automatically; a new issue opens if another unlisted repo turns up.'
+            echo "Closed issue #$EXISTING"
+          fi
