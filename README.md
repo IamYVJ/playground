@@ -41,6 +41,18 @@ Optional flags:
   deploying, so a 404 is a warning instead of a build failure. Remove it once the site is up; the
   checker reports when a flagged link starts resolving.
 
+## Social preview
+
+`og.png` (1200×630) is the image shown when the link is shared. It is generated, not
+hand-drawn — rebuild it after changing the wording or brand colours:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/og-image.ps1
+```
+
+The `og:image` and `twitter:image` tags point at the absolute URL, because crawlers fetch
+the image without a page context and a relative path silently yields no preview.
+
 ## Maintenance
 
 Two scripts keep the list honest. Both are dependency-free and need Node 20+.

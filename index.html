@@ -12,11 +12,25 @@
   <!-- Inline YVJ favicon: gradient rounded square matching the wordmark -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id='g'%20x1='0'%20y1='0'%20x2='1'%20y2='1'%3E%3Cstop%20offset='0'%20stop-color='%236366F1'/%3E%3Cstop%20offset='1'%20stop-color='%23DB2777'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='64'%20height='64'%20rx='15'%20fill='url(%23g)'/%3E%3Ctext%20x='32'%20y='41'%20text-anchor='middle'%20font-family='Outfit,Segoe%20UI,Arial,sans-serif'%20font-size='21'%20font-weight='700'%20letter-spacing='0.5'%20fill='%23ffffff'%3EYVJ%3C/text%3E%3C/svg%3E" />
 
-  <!-- Open Graph -->
+  <!-- Open Graph. og:image must be an absolute URL — crawlers fetch it without a page
+       context, so a relative path silently yields no preview. 1200x630 is the size both
+       Facebook and Twitter crop from; declaring it lets them reserve the space before
+       the file loads. Regenerate with scripts/og-image.ps1 if the wording changes. -->
   <meta property="og:title" content="YVJ's Playground" />
   <meta property="og:description" content="Small web apps and games I build and host on GitHub Pages." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://iamyvj.github.io/playground/" />
+  <meta property="og:site_name" content="YVJ's Playground" />
+  <meta property="og:image" content="https://iamyvj.github.io/playground/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="YVJ's Playground — small web apps and games, free, static and open source." />
+
+  <!-- Twitter/X reads og:* for most fields but needs its own card type to render large. -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="YVJ's Playground" />
+  <meta name="twitter:description" content="Small web apps and games I build and host on GitHub Pages." />
+  <meta name="twitter:image" content="https://iamyvj.github.io/playground/og.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -483,8 +497,28 @@
       flex-direction: column;
       gap: 12px;
       box-shadow: var(--shadow-sm);
+      /* Clips the ::before sweep to the rounded corners as it crosses the top edge. */
+      overflow: hidden;
       transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s var(--ease);
     }
+    /* A current running along the top edge on hover. ::after is already spoken for by the
+       masked gradient border below, so the sweep lives on ::before. It inherits the card's
+       --accent, so Tools sweep indigo and Games sweep pink without a second rule. */
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 2px;
+      width: 40%;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      transform: translateX(-120%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .card:hover::before { opacity: 1; animation: card-sweep 1.1s ease-in-out infinite; }
+    @keyframes card-sweep { to { transform: translateX(260%); } }
     .card::after {
       content: "";
       position: absolute;
