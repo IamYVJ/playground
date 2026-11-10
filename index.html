@@ -454,6 +454,91 @@
       font-variant-numeric: tabular-nums;
     }
 
+    /* Count and sort share one group: beside the search box on wide screens, a full-width row
+       (count left, sort right) once the search box takes the whole line on phones. */
+    .search-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    @media (max-width: 640px) { .search-meta { flex: 1 1 100%; } }
+    .sort-box { display: inline-flex; align-items: center; gap: 8px; }
+    .sort-label {
+      font-size: 0.74rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-faint);
+    }
+    .sort-box { position: relative; }
+    #sort {
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      padding: 8px 12px 8px 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+    #sort svg {
+      width: 14px; height: 14px;
+      color: var(--text-faint);
+      transition: transform 0.2s var(--ease);
+    }
+    #sort[aria-expanded="true"] svg { transform: rotate(180deg); }
+    #sort:hover, #sort[aria-expanded="true"] { border-color: var(--accent); }
+    #sort:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-ring);
+    }
+
+    /* Custom list instead of the native popup, which can't be themed. No `display` here, so
+       the [hidden] attribute keeps working. */
+    .sort-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      z-index: 30;
+      min-width: 100%;
+      margin: 0;
+      padding: 6px;
+      list-style: none;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md, 0 12px 32px rgba(0, 0, 0, 0.18));
+    }
+    .sort-menu:focus { outline: none; }
+    .sort-menu li {
+      font-size: 0.86rem;
+      font-weight: 500;
+      color: var(--text);
+      padding: 9px 12px 9px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      position: relative;
+    }
+    .sort-menu li.active { background: var(--surface-2); }
+    .sort-menu li[aria-selected="true"] { font-weight: 600; color: var(--accent); }
+    .sort-menu li[aria-selected="true"]::before {
+      content: '';
+      position: absolute;
+      left: 12px; top: 50%;
+      width: 5px; height: 9px;
+      border: solid currentColor;
+      border-width: 0 2px 2px 0;
+      transform: translateY(-65%) rotate(45deg);
+    }
+
     .tag-filter {
       display: flex;
       flex-wrap: nowrap;
@@ -837,7 +922,20 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
           </button>
         </div>
-        <span class="result-count" id="result-count" aria-live="polite"></span>
+        <div class="search-meta">
+          <span class="result-count" id="result-count" aria-live="polite"></span>
+          <div class="sort-box" id="sort-box">
+            <span class="sort-label" id="sort-label">Sort</span>
+            <button type="button" id="sort" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="sort-label sort-current">
+              <span id="sort-current">Newest</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <ul class="sort-menu" id="sort-menu" role="listbox" aria-labelledby="sort-label" tabindex="-1" hidden>
+              <li role="option" data-value="newest" aria-selected="true">Newest</li>
+              <li role="option" data-value="views" aria-selected="false">Most visited</li>
+            </ul>
+          </div>
+        </div>
       </div>
       <div class="tag-filter collapsed" id="tag-filter" role="group" aria-label="Filter projects by tag">
         <span class="tag-filter-label">Tags</span>
@@ -1285,6 +1383,7 @@
     // has no data (or does not load the beacon) — the badge stays hidden. Requests fire only
     // when a card scrolls into view, so a visitor never triggers ~50 fetches at once.
     // START is the same fixed, all-time-defeating cache key used by the footer counter.
+    let loadAllCounts = () => Promise.resolve();   // replaced once showCardCounts runs
     function showCardCounts() {
       const tag = document.querySelector('script[data-goatcounter]');
       const endpoint = tag && tag.dataset.goatcounter;
@@ -1292,19 +1391,26 @@
       const base = endpoint.replace(/\/count$/, '');
       const START = '2026-01-01';
 
+      // Memoised per card (the promise is stored on the element) so the lazy scroll-in load and
+      // the "Most visited" sort share one request. Always resolves; failure leaves views at 0.
       const load = (card) => {
+        if (card._viewsP) return card._viewsP;
         const box = card.querySelector('.card-views');
-        if (!box) return;
-        fetch(`${base}/counter/${encodeURIComponent(`/${card.dataset.repo}/`)}.json?start=${START}`)
+        if (!box) return (card._viewsP = Promise.resolve());
+        return (card._viewsP = fetch(`${base}/counter/${encodeURIComponent(`/${card.dataset.repo}/`)}.json?start=${START}`)
           .then((res) => (res.ok ? res.json() : Promise.reject(new Error('bad status'))))
           .then((data) => {
-            if (data && data.count != null && data.count !== '0') {
+            // `count` is pre-formatted with thousands separators ("1,234"): show as-is, sort on the digits.
+            const n = data && data.count != null ? parseInt(String(data.count).replace(/\D/g, ''), 10) : 0;
+            if (n > 0) {
+              card.dataset.views = String(n);
               box.querySelector('.card-views-n').textContent = String(data.count);
               box.hidden = false;
             }
           })
-          .catch(() => { /* decorative: leave hidden */ });
+          .catch(() => { /* decorative: leave hidden */ }));
       };
+      loadAllCounts = () => Promise.all(allCards.map(load));
 
       if (!('IntersectionObserver' in window)) { allCards.forEach(load); return; }
       const io = new IntersectionObserver((entries) => {
@@ -1316,6 +1422,71 @@
       }, { rootMargin: '200px' });
       allCards.forEach((c) => io.observe(c));
     }
+
+    // ---- Sort: newest first (default, the hard-coded date order) / most visited ----
+    // allCards is already in date order, so it doubles as the tie-break: Array.sort is stable,
+    // and projects with equal (or no) counts keep their newest-first order.
+    let sortMode = 'newest';
+    async function applySort(mode) {
+      sortMode = mode;
+      if (mode === 'views') await loadAllCounts();   // counts load lazily, so fetch the rest first
+      if (sortMode !== mode) return;                  // changed again while the fetches were out
+      const ordered = mode === 'views'
+        ? [...allCards].sort((a, b) => (+b.dataset.views || 0) - (+a.dataset.views || 0))
+        : allCards;
+      ordered.forEach(c => grid.appendChild(c));
+    }
+
+    // Custom dropdown (button + listbox) so the open list matches the page theme.
+    (function sortDropdown() {
+      const box = document.getElementById('sort-box');
+      const btn = document.getElementById('sort');
+      const menu = document.getElementById('sort-menu');
+      const current = document.getElementById('sort-current');
+      const items = Array.from(menu.querySelectorAll('[role="option"]'));
+      let active = 0;
+
+      function setActive(i) {
+        active = (i + items.length) % items.length;
+        items.forEach((li, n) => li.classList.toggle('active', n === active));
+      }
+      function open() {
+        menu.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        setActive(items.findIndex(li => li.dataset.value === sortMode));
+        menu.focus();
+      }
+      function close(refocus) {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        if (refocus) btn.focus();
+      }
+      function choose(li) {
+        items.forEach(o => o.setAttribute('aria-selected', String(o === li)));
+        current.textContent = li.textContent;
+        close(true);
+        if (li.dataset.value !== sortMode) applySort(li.dataset.value);
+      }
+
+      btn.addEventListener('click', () => (menu.hidden ? open() : close(false)));
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (menu.hidden) open(); }
+      });
+      items.forEach((li, i) => {
+        li.addEventListener('click', () => choose(li));
+        li.addEventListener('mousemove', () => setActive(i));
+      });
+      menu.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); setActive(active + 1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(active - 1); }
+        else if (e.key === 'Home') { e.preventDefault(); setActive(0); }
+        else if (e.key === 'End') { e.preventDefault(); setActive(items.length - 1); }
+        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(items[active]); }
+        else if (e.key === 'Escape') { e.preventDefault(); close(true); }
+        else if (e.key === 'Tab') close(false);
+      });
+      document.addEventListener('click', (e) => { if (!menu.hidden && !box.contains(e.target)) close(false); });
+    })();
 
     // ---- Hero backdrop: snakes wandering the dot grid ----
     // Each snake walks the grid one cell at a time, mostly straight, turning now and then.
