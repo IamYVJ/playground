@@ -663,6 +663,28 @@
       border-radius: var(--radius-pill);
     }
 
+    /* Per-card visitor count. No `display` on the base rule's [hidden] state: the count is
+       decorative, so cards whose site has no data (or whose request is blocked) show nothing. */
+    .card-views {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.74rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+    }
+    .card-views[hidden] { display: none; }
+    .card-views svg {
+      width: 13px; height: 13px;
+      fill: none; stroke: currentColor; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0 0 0 0); white-space: nowrap;
+    }
+
     .card-actions {
       display: flex;
       gap: 10px;
@@ -990,7 +1012,7 @@
           </div>
         </div>
         <p class="desc">${escapeHtml(item.description)}</p>
-        <div class="card-tags">${tagsHtml}</div>
+        <div class="card-tags">${tagsHtml}${item.noLive ? '' : `<span class="card-views" hidden title="Visitors"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg><span class="card-views-n"></span><span class="sr-only"> visitors</span></span>`}</div>
         <div class="card-actions">
           ${liveBtn}
           <a class="btn btn-code" href="${code}" target="_blank" rel="noopener noreferrer"
@@ -1257,6 +1279,44 @@
         .catch(() => { /* purely decorative: leave the footnote hidden on every failure */ });
     }
 
+    // ---- Per-card visitor counts (GoatCounter, decorative) ----
+    // Each project's own site reports to the same GoatCounter account under its path
+    // (/{repo}/), so the card asks for that path's all-time count. A 404 just means that site
+    // has no data (or does not load the beacon) — the badge stays hidden. Requests fire only
+    // when a card scrolls into view, so a visitor never triggers ~50 fetches at once.
+    // START is the same fixed, all-time-defeating cache key used by the footer counter.
+    function showCardCounts() {
+      const tag = document.querySelector('script[data-goatcounter]');
+      const endpoint = tag && tag.dataset.goatcounter;
+      if (!endpoint) return;
+      const base = endpoint.replace(/\/count$/, '');
+      const START = '2026-01-01';
+
+      const load = (card) => {
+        const box = card.querySelector('.card-views');
+        if (!box) return;
+        fetch(`${base}/counter/${encodeURIComponent(`/${card.dataset.repo}/`)}.json?start=${START}`)
+          .then((res) => (res.ok ? res.json() : Promise.reject(new Error('bad status'))))
+          .then((data) => {
+            if (data && data.count != null && data.count !== '0') {
+              box.querySelector('.card-views-n').textContent = String(data.count);
+              box.hidden = false;
+            }
+          })
+          .catch(() => { /* decorative: leave hidden */ });
+      };
+
+      if (!('IntersectionObserver' in window)) { allCards.forEach(load); return; }
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          io.unobserve(e.target);
+          load(e.target);
+        });
+      }, { rootMargin: '200px' });
+      allCards.forEach((c) => io.observe(c));
+    }
+
     // ---- Hero backdrop: snakes wandering the dot grid ----
     // Each snake walks the grid one cell at a time, mostly straight, turning now and then.
     // The body is a fixed-length queue, so the tail follows the head exactly and fades out
@@ -1417,6 +1477,7 @@
     // script — so the tag does not exist yet at this point in parsing. Calling directly would
     // read a null tag and silently return. Wait for parsing to finish instead.
     document.addEventListener('DOMContentLoaded', showVisitorCount);
+    document.addEventListener('DOMContentLoaded', showCardCounts);
   </script>
 
   <script
