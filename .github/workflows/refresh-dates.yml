@@ -5,7 +5,8 @@ name: Refresh project dates
 # those dates honest and flags repos that are not listed yet.
 on:
   schedule:
-    - cron: '0 6 * * 1'   # Mondays, 06:00 UTC
+    - cron: '0 6 * * 1'    # Mondays, 06:00 UTC
+    - cron: '30 16 * * 5'  # Fridays, 22:00 IST (16:30 UTC)
   workflow_dispatch:       # and on demand from the Actions tab
 
 # Least privilege: commit the date refresh, and file an issue about unlisted repos.
